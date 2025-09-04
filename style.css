@@ -1,0 +1,280 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.container {
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+h1 {
+    color: white;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    animation: fadeIn 2s ease-in-out;
+}
+
+.rainbow-container {
+    position: relative;
+    width: 600px;
+    height: 300px;
+    margin: 0 auto;
+    perspective: 1000px;
+}
+
+.rainbow-fragment {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.8;
+    animation: float 3s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.rainbow-fragment:hover {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 1;
+}
+
+/* Red fragments */
+.red {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    width: 80px;
+    height: 80px;
+}
+
+.fragment-1 {
+    top: 20px;
+    left: 50px;
+    animation-delay: 0s;
+}
+
+.fragment-2 {
+    top: 60px;
+    left: 200px;
+    animation-delay: 0.5s;
+}
+
+.fragment-3 {
+    top: 100px;
+    left: 350px;
+    animation-delay: 1s;
+}
+
+/* Orange fragments */
+.orange {
+    background: linear-gradient(45deg, #ffa726, #ffb74d);
+    width: 75px;
+    height: 75px;
+}
+
+.fragment-4 {
+    top: 40px;
+    left: 100px;
+    animation-delay: 0.2s;
+}
+
+.fragment-5 {
+    top: 80px;
+    left: 250px;
+    animation-delay: 0.7s;
+}
+
+.fragment-6 {
+    top: 120px;
+    left: 400px;
+    animation-delay: 1.2s;
+}
+
+/* Yellow fragments */
+.yellow {
+    background: linear-gradient(45deg, #ffeb3b, #fff176);
+    width: 70px;
+    height: 70px;
+}
+
+.fragment-7 {
+    top: 60px;
+    left: 150px;
+    animation-delay: 0.4s;
+}
+
+.fragment-8 {
+    top: 100px;
+    left: 300px;
+    animation-delay: 0.9s;
+}
+
+.fragment-9 {
+    top: 140px;
+    left: 450px;
+    animation-delay: 1.4s;
+}
+
+/* Green fragments */
+.green {
+    background: linear-gradient(45deg, #66bb6a, #81c784);
+    width: 65px;
+    height: 65px;
+}
+
+.fragment-10 {
+    top: 80px;
+    left: 80px;
+    animation-delay: 0.1s;
+}
+
+.fragment-11 {
+    top: 120px;
+    left: 230px;
+    animation-delay: 0.6s;
+}
+
+.fragment-12 {
+    top: 160px;
+    left: 380px;
+    animation-delay: 1.1s;
+}
+
+/* Blue fragments */
+.blue {
+    background: linear-gradient(45deg, #42a5f5, #64b5f6);
+    width: 60px;
+    height: 60px;
+}
+
+.fragment-13 {
+    top: 100px;
+    left: 120px;
+    animation-delay: 0.3s;
+}
+
+.fragment-14 {
+    top: 140px;
+    left: 270px;
+    animation-delay: 0.8s;
+}
+
+.fragment-15 {
+    top: 180px;
+    left: 420px;
+    animation-delay: 1.3s;
+}
+
+/* Indigo fragments */
+.indigo {
+    background: linear-gradient(45deg, #5c6bc0, #7986cb);
+    width: 55px;
+    height: 55px;
+}
+
+.fragment-16 {
+    top: 120px;
+    left: 60px;
+    animation-delay: 0.2s;
+}
+
+.fragment-17 {
+    top: 160px;
+    left: 210px;
+    animation-delay: 0.7s;
+}
+
+.fragment-18 {
+    top: 200px;
+    left: 360px;
+    animation-delay: 1.2s;
+}
+
+/* Violet fragments */
+.violet {
+    background: linear-gradient(45deg, #ab47bc, #ba68c8);
+    width: 50px;
+    height: 50px;
+}
+
+.fragment-19 {
+    top: 140px;
+    left: 100px;
+    animation-delay: 0.4s;
+}
+
+.fragment-20 {
+    top: 180px;
+    left: 250px;
+    animation-delay: 0.9s;
+}
+
+.fragment-21 {
+    top: 220px;
+    left: 400px;
+    animation-delay: 1.4s;
+}
+
+/* Animations */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-10px) rotate(2deg);
+    }
+    50% {
+        transform: translateY(-5px) rotate(-1deg);
+    }
+    75% {
+        transform: translateY(-15px) rotate(1deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .rainbow-container {
+        width: 90vw;
+        height: 200px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .rainbow-fragment {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .fragment-1, .fragment-2, .fragment-3,
+    .fragment-4, .fragment-5, .fragment-6,
+    .fragment-7, .fragment-8, .fragment-9,
+    .fragment-10, .fragment-11, .fragment-12,
+    .fragment-13, .fragment-14, .fragment-15,
+    .fragment-16, .fragment-17, .fragment-18,
+    .fragment-19, .fragment-20, .fragment-21 {
+        left: calc(var(--left, 0) * 0.6);
+    }
+}
