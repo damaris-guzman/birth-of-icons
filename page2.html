@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vision</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(circle at 50% 40%, #fff9ff, #ffeefc, #ffdff0);
+      font-family: system-ui, sans-serif;
+      overflow: hidden;
+    }
 
+    /* Base block style */
+    .chip {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border: 3px solid black;
+      transition: 0.4s transform, 0.4s border-radius, 0.4s background-color;
+      cursor: pointer;
+    }
+
+    /* Colorful blocks */
+    .c1 { left: 10vw; top: 20vh; background: rgb(245, 44, 225); }   /* magenta */
+    .c2 { left: 32vw; top: 46vh; background: rgb(82, 246, 255); }   /* cyan */
+    .c3 { left: 55vw; top: 16vh; background: rgb(150, 255, 150); }  /* light green */
+    .c5 { left: 18vw; top: 68vh; background: rgb(248, 255, 34); }   /* yellow */
+    .c6 { left: 42vw; top: 24vh; background: rgb(114, 92, 255); }   /* purple */
+    .c7 { left: 61vw; top: 72vh; background: rgb(255, 94, 129); }   /* pink-red */
+    .c8 { left: 78vw; top: 28vh; background: rgb(0, 206, 164); }    /* teal-green */
+    .c9 { left: 26vw; top: 10vh; background: rgb(255, 117, 190); }  /* rose */
+
+    /* Hover/focus animation: bloom into circles */
+    .chip:hover,
+    .chip:focus {
+      border-radius: 50%;
+      transform: rotate(8deg) scale(1.1);
+      outline: none;
+    }
+
+    /* Bottom-right arrow (same style as the other page) */
+    .nav{
+      position: fixed; bottom: 10px; padding: 6px 10px; border-radius: 8px;
+      background: rgba(255,255,255,.6); backdrop-filter: blur(6px);
+      text-decoration: none; color: #000; font-weight: 600;
+    }
+    .next{ right: 10px; }
+  </style>
+</head>
+<body>
+  <!-- Shapes that link forward -->
+  <a class="chip c1" href="page3.html" title="huh"></a>
+  <a class="chip c2" href="page3.html" title="yuh"></a>
+  <a class="chip c3" href="page3.html" title="swag"></a>
+  <a class="chip c5" href="page3.html" title="love"></a>
+  <a class="chip c6" href="page3.html" title="based"></a>
+  <a class="chip c7" href="page3.html" title="feel"></a>
+  <a class="chip c8" href="page3.html" title="real"></a>
+  <a class="chip c9" href="page3.html" title="glow"></a>
+
+  <!-- Bottom-right arrow -->
+  <a class="nav next" href="page3.html">→</a>
+</body>
+</html>
