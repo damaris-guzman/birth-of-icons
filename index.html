@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Power → Next</title>
+  <style>
+    /* --- Base reset --- */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    /* --- Color palette (includes pink) --- */
+    :root{
+      --pink:   #ff5bb2;
+      --orange: #ff8a3d;
+      --yellow: #ffd93d;
+      --green:  #2bd100;
+      --teal:   #00c6b8;
+      --blue:   #5aa3ff;
+      --indigo: #6a00ff;
+      --violet: #d84cff;
+      --ink:    #000; /* for borders */
+    }
+
+    /* --- Layering --- */
+    .stage { position: fixed; inset: 0; }
+    .bg     { position: absolute; inset: 0; z-index: 0; }
+    .ui     { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; }
+
+    /* --- Shapes (all divs) --- */
+    .shape { position: absolute; }
+    .circle { border-radius: 50%; }
+    .outline { background: #fff8; border: 3px solid var(--ink); }
+
+    .stripe {
+      height: 12px;
+      background: linear-gradient(90deg, var(--pink), var(--orange), var(--yellow));
+      opacity: .85;
+    }
+
+    .stripe.alt1 { background: linear-gradient(90deg, var(--green), var(--teal), var(--blue)); }
+    .stripe.alt2 { background: linear-gradient(90deg, var(--indigo), var(--violet), var(--pink)); }
+
+    .pixel { width: 10px; height: 10px; opacity: 0.9; }
+
+    /* Color utility classes for shapes */
+    .c-pink   { background: var(--pink); }
+    .c-orange { background: var(--orange); }
+    .c-yellow { background: var(--yellow); }
+    .c-green  { background: var(--green); }
+    .c-teal   { background: var(--teal); }
+    .c-blue   { background: var(--blue); }
+    .c-indigo { background: var(--indigo); }
+    .c-violet { background: var(--violet); }
+
+    /* --- Power button (same look) --- */
+    .power {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #fff;
+      border: 4px solid var(--ink);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform .15s ease;
+      box-shadow: 0 6px 0 var(--ink), 0 12px 24px rgba(0,0,0,.2);
+    }
+    .power:active { transform: translateY(2px); box-shadow: 0 4px 0 var(--ink), 0 8px 18px rgba(0,0,0,.18); }
+    .power:focus-visible { outline: 4px solid var(--ink); outline-offset: 4px; }
+
+    /* Classic power glyph using divs */
+    .glyph {
+      position: relative;
+      width: 54px; height: 54px;
+      border: 6px solid var(--ink); /* ring */
+      border-top-color: transparent; /* open notch */
+      border-radius: 50%;
+    }
+    .glyph::after {
+      content: "";
+      position: absolute;
+      left: 50%; top: -22px;
+      transform: translateX(-50%);
+      width: 6px; height: 24px;      /* vertical bar */
+      background: var(--ink);
+      border-radius: 3px;
+    }
+
+    /* Screenreader-only helper */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <!-- Colorful background made of divs -->
+    <div class="bg">
+      <!-- rainbow-ish stripes -->
+      <div class="shape stripe"      style="width: 80vw; left: -10vw; top: 12vh; transform: rotate(18deg);"></div>
+      <div class="shape stripe alt1" style="width: 90vw; left: 5vw;  top: 38vh; transform: rotate(-12deg);"></div>
+      <div class="shape stripe alt2" style="width: 70vw; left: -5vw; top: 68vh; transform: rotate(9deg);"></div>
+
+      <!-- circles & squares -->
+      <div class="shape circle c-pink"    style="width: 80px; height: 80px; left: 6vw;  top: 6vh;"></div>
+      <div class="shape outline circle"    style="width: 110px; height: 110px; left: 18vw;  top: 18vh;"></div>
+      <div class="shape c-orange"          style="width: 60px; height: 60px; left: 32vw; top: 10vh;"></div>
+      <div class="shape outline"           style="width: 90px; height: 90px; left: 8vw;  bottom: 10vh;"></div>
+      <div class="shape circle c-yellow"   style="width: 50px; height: 50px; right: 10vw; top: 14vh;"></div>
+      <div class="shape outline circle"    style="width: 140px; height: 140px; right: 18vw; top: 30vh;"></div>
+      <div class="shape c-green"           style="width: 120px; height: 40px; right: 8vw; bottom: 18vh;"></div>
+      <div class="shape circle c-teal"     style="width: 36px; height: 36px; left: 44vw; top: 52vh;"></div>
+      <div class="shape c-blue"            style="width: 70px; height: 70px; left: 54vw; top: 22vh;"></div>
+      <div class="shape circle c-violet"   style="width: 44px; height: 44px; left: 14vw; top: 44vh;"></div>
+      <div class="shape c-indigo"          style="width: 80px; height: 24px; left: 68vw; top: 64vh;"></div>
+
+      <!-- scattered pixels -->
+      <div class="pixel c-pink"   style="left: 20vw; top: 8vh;"></div>
+      <div class="pixel c-orange" style="left: 24vw; top: 12vh;"></div>
+      <div class="pixel c-yellow" style="left: 28vw; top: 9vh;"></div>
+      <div class="pixel c-green"  style="left: 40vw; top: 80vh;"></div>
+      <div class="pixel c-teal"   style="left: 44vw; top: 78vh;"></div>
+      <div class="pixel c-blue"   style="left: 62vw; top: 12vh;"></div>
+      <div class="pixel c-indigo" style="left: 68vw; top: 16vh;"></div>
+      <div class="pixel c-violet" style="left: 70vw; top: 14vh;"></div>
+      <div class="pixel c-pink"   style="left: 12vw; top: 62vh;"></div>
+      <div class="pixel c-orange" style="left: 16vw; top: 66vh;"></div>
+    </div>
+
+    <!-- Center UI -->
+    <div class="ui">
+      <button id="power" class="power" aria-pressed="false">
+        <span class="glyph" aria-hidden="true"></span>
+        <span class="sr-only">Go to next page</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Change this to wherever your "next" page lives
+    const NEXT_URL = 'page2.html';
+
+    document.getElementById('power').addEventListener('click', () => {
+      // tiny JS, basic nav
+      window.location.assign(NEXT_URL);
+    });
+  </script>
+
+  <!-- No-JS fallback: remove comments to show a link under the button
+  <noscript>
+    <div style="position:fixed;inset:auto 0 16px 0;display:grid;place-items:center;">
+      <a href="page2.html">Next page</a>
+    </div>
+  </noscript>
+  -->
+</body>
+</html>
