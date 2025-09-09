@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bloom</title>
+<style>
+  :root { --bg: #ffffff; }
+  html, body {
+    height: 100%; margin: 0; overflow: hidden; user-select: none; touch-action: none;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+    background: var(--bg);
+  }
+  canvas { display: block; width: 100vw; height: 100vh; }
+
+  /* slow hue-shift for the whole scene */
+  .huerot { filter: hue-rotate(0deg); transition: filter 1s linear; }
+
+  .hud {
+    position: fixed; left: 12px; bottom: 12px;
+    background: rgba(255,255,255,0.65); color:#000; padding:6px 10px; border-radius:8px; font-size:12px;
+    letter-spacing:.02em; backdrop-filter: blur(4px); box-shadow: 0 4px 16px rgba(0,0,0,.12); user-select:text;
+  }
+  .dark .hud { background: rgba(0,0,0,0.55); color:#fff; }
+
+  .nav {
+    position: fixed; bottom: 10px; padding: 6px 10px; border-radius: 8px;
+    background: rgba(255,255,255,.6); backdrop-filter: blur(6px);
+    text-decoration: none; color: #000; font-weight: 600;
+  }
+  .prev { left: 10px; } .next { right: 10px; }
+  .dark .nav { background: rgba(0,0,0,.55); color:#fff; }
+</style>
+</head>
+<body class="huerot">
+  <canvas id="c"></canvas>
+  <div class="hud">SPACE: pause | I: invert | R: reshuffle | H: hue cycle</div>
+  <a class="nav prev" href="page3.html">←</a>
+  <a class="nav next" href="page5.html">→</a>
+
+<script>
+  // ===== Canvas setup =====
+  const DPR = Math.min(2, devicePixelRatio || 1);
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    const w = innerWidth, h = innerHeight;
+    canvas.width = Math.floor(w * DPR);
+    canvas.height = Math.floor(h * DPR);
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  addEventListener('resize', resize, { passive: true });
+  resize();
+
+  // ===== Utilities =====
+  const rand = (a,b)=>Math.random()*(b-a)+a;
+  const rint = (a,b)=>Math.floor(rand(a,b+1));
+  const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+  const pick = arr => arr[(Math.random()*arr.length)|0];
+  const fract = x => x - Math.floor(x);
+  function prng(seed){return function(){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return fract((seed>>>0)/4294967296);};}
+
+  // ===== Palette (saturated) =====
+  const SAT = ['#FF5BB2','#FF8A3D','#FFD93D','#49E36A','#00C6B8','#5C6CFF','#B14CFF','#FF546E'];
+
+  // ===== Smooth closed path via quadratic midpoints =====
+  function drawSmoothClosedPath(points, getPos){
+    const n = points.length; if (n<3) return;
+    const mpts = [];
+    for (let i=0;i<n;i++){
+      const a = getPos(points[i]), b = getPos(points[(i+1)%n]);
+      mpts.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+    }
+    ctx.beginPath(); ctx.moveTo(mpts[0].x, mpts[0].y);
+    for (let i=0;i<n;i++){
+      const ctrl = getPos(points[(i+1)%n]);
+      const next = mpts[(i+1)%n];
+      ctx.quadraticCurveTo(ctrl.x, ctrl.y, next.x, next.y);
+    }
+    ctx.closePath();
+  }
+
+  // ===== Shape (blooming, glowing, orbital) =====
+  class BloomShape {
+    constructor(w,h){
+      this.seed = (Math.random()*0xffffffff)>>>0;
+      this.rand = prng(this.seed);
+
+      this.cx = rand(-w*0.1, w*1.1);
+      this.cy = rand(-h*0.1, h*1.1);
+      this.baseR = rand(Math.min(w,h)*0.04, Math.min(w,h)*0.12);
+
+      // mixture of slightly jagged + blob for organic energy
+      this.verts = rint(10, 20);
+      this.jag   = rand(0.12, 0.28);
+      this.spike = rand(0.08, 0.2);
+      this.freq  = rand(0.004, 0.012);
+
+      // motion
+      const spd = rand(0.12, 0.55); // a bit livelier than p3
+      const ang = rand(0, Math.PI*2);
+      this.vx = Math.cos(ang)*spd;
+      this.vy = Math.sin(ang)*spd;
+
+      this.rotation = rand(0, Math.PI*2);
+      this.rotSpeed = rand(-1,1)*(Math.random()<0.6?0.002:0.004);
+
+      this.alpha = rand(0.65, 0.92);
+      this.lineWidth = rand(1.1, 2.0);
+
+      this.fill = pick(SAT);
+      this.strokeSoft = 'rgba(0,0,0,0.18)';
+      this.strokeHL   = 'rgba(255,255,255,0.3)';
+
+      // Precompute points
+      this.points = [];
+      for (let i=0;i<this.verts;i++){
+        const t = i/this.verts;
+        const angle = t*Math.PI*2 + rand(-0.04,0.04);
+        const radius = this.baseR * (1 + rand(-this.jag, this.jag));
+        this.points.push({angle,radius,phase:rand(0,1000)});
+        const angle2 = angle + rand(0.02,0.09);
+        const radius2 = radius*(1 + this.spike + rand(-0.15,0.15));
+        this.points.push({angle:angle2,radius:radius2,phase:rand(0,1000)});
+      }
+    }
+
+    step(bounds){
+      // orbital swirl around center
+      const cx = bounds.w/2, cy = bounds.h/2;
+      const dx = cx - this.cx, dy = cy - this.cy;
+      const dist = Math.hypot(dx,dy) + 1e-5;
+
+      // gentle attraction to center
+      const pull = 0.0009;
+      this.vx += (dx/dist)*pull;
+      this.vy += (dy/dist)*pull;
+
+      // tangential swirl (perpendicular push)
+      const swirl = 0.06;
+      const tang = Math.atan2(dy,dx) + Math.PI/2;
+      this.vx += Math.cos(tang)*swirl*0.02;
+      this.vy += Math.sin(tang)*swirl*0.02;
+
+      // damping
+      this.vx *= 0.986;
+      this.vy *= 0.986;
+
+      this.cx += this.vx;
+      this.cy += this.vy;
+
+      // wrap
+      const m = Math.max(this.baseR*2, 120);
+      if (this.cx < -m) this.cx = bounds.w + m;
+      if (this.cx > bounds.w + m) this.cx = -m;
+      if (this.cy < -m) this.cy = bounds.h + m;
+      if (this.cy > bounds.h + m) this.cy = -m;
+
+      this.rotation += this.rotSpeed;
+    }
+
+    draw(t){
+      ctx.save();
+      ctx.translate(this.cx, this.cy);
+      ctx.rotate(this.rotation);
+      ctx.globalAlpha = this.alpha;
+      ctx.lineJoin = 'round'; ctx.miterLimit = 6;
+
+      const getPos = (p)=>{
+        const jitter = Math.sin((t*this.freq)+p.phase)*(p.radius*0.18);
+        const r = Math.max(4, p.radius+jitter);
+        return {x:Math.cos(p.angle)*r, y:Math.sin(p.angle)*r};
+      };
+      drawSmoothClosedPath(this.points, getPos);
+
+      // glow
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = this.fill;
+      ctx.fillStyle = this.fill;
+      ctx.fill();
+
+      // strokes
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = this.lineWidth*0.9;
+      ctx.strokeStyle = this.strokeSoft;
+      ctx.stroke();
+
+      ctx.globalAlpha = clamp(this.alpha + 0.08, 0, 1);
+      ctx.lineWidth = this.lineWidth*0.5;
+      ctx.strokeStyle = this.strokeHL;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+  }
+
+  // ===== Scene =====
+  const state = { shapes: [], running: true, invert: false, hueOn: true, hue: 0 };
+
+  function init(){
+    const w = innerWidth, h = innerHeight;
+    state.shapes = [];
+    const count = Math.round((w*h)/19500); // denser than p3
+    for (let i=0;i<count;i++) state.shapes.push(new BloomShape(w,h));
+  }
+
+  function clear(){
+    // faint radial background to add depth
+    const w = canvas.width/DPR, h = canvas.height/DPR;
+    const g = ctx.createRadialGradient(w/2,h/2,0, w/2,h/2, Math.max(w,h)*0.7);
+    if (state.invert){
+      g.addColorStop(0,'#141414'); g.addColorStop(1,'#0a0a0a');
+    } else {
+      g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#f8f8ff');
+    }
+    ctx.fillStyle = g; ctx.fillRect(0,0,w,h);
+  }
+
+  function draw(tms){
+    if (!state.running) return;
+    const t = tms*0.001;
+    clear();
+
+    // mild shuffle
+    const order = state.shapes.slice();
+    for (let i=order.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0; [order[i],order[j]]=[order[j],order[i]];
+    }
+
+    for (const s of order){
+      s.step({w: innerWidth, h: innerHeight});
+      if (state.invert){
+        // invert look: emphasize white stroke a bit more
+        s.strokeHL = 'rgba(255,255,255,0.42)';
+        s.strokeSoft = 'rgba(0,0,0,0.28)';
+      } else {
+        s.strokeHL = 'rgba(255,255,255,0.30)';
+        s.strokeSoft = 'rgba(0,0,0,0.18)';
+      }
+      s.draw(t);
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  init();
+  requestAnimationFrame(draw);
+
+  // ===== Hue-rotate loop =====
+  let hueTimer = setInterval(()=>{
+    if (!state.hueOn) return;
+    state.hue = (state.hue+1)%360;
+    document.body.style.filter = `hue-rotate(${state.hue}deg)`;
+  }, 100);
+
+  // ===== Controls =====
+  addEventListener('keydown', (e)=>{
+    const k = e.key.toLowerCase();
+    if (e.code === 'Space'){
+      state.running = !state.running;
+      if (state.running) requestAnimationFrame(draw);
+    } else if (k === 'i'){
+      state.invert = !state.invert;
+      document.body.classList.toggle('dark', state.invert);
+    } else if (k === 'r'){
+      init();
+    } else if (k === 'h'){
+      state.hueOn = !state.hueOn;
+      if (!state.hueOn) document.body.style.filter = 'hue-rotate(0deg)';
+    }
+  });
+
+  addEventListener('pointerdown', ()=>{
+    state.running = !state.running;
+    if (state.running) requestAnimationFrame(draw);
+  });
+</script>
+</body>
+</html>
