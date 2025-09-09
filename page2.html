@@ -21,6 +21,7 @@
       border: 3px solid black;
       transition: 0.4s transform, 0.4s border-radius, 0.4s background-color;
       cursor: pointer;
+      display: inline-block;
     }
 
     /* Colorful blocks */
@@ -41,13 +42,20 @@
       outline: none;
     }
 
-    /* Bottom-right arrow (same style as the other page) */
+    /* Bottom-right arrow */
     .nav{
       position: fixed; bottom: 10px; padding: 6px 10px; border-radius: 8px;
       background: rgba(255,255,255,.6); backdrop-filter: blur(6px);
       text-decoration: none; color: #000; font-weight: 600;
     }
     .next{ right: 10px; }
+
+    /* One-time audio unlock button */
+    #unlock {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: #111; color: #fff; border: none; border-radius: 10px;
+      padding: 10px 14px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.15);
+    }
   </style>
 </head>
 <body>
@@ -56,12 +64,108 @@
   <a class="chip c2" href="page3.html" title="yuh"></a>
   <a class="chip c3" href="page3.html" title="swag"></a>
   <a class="chip c5" href="page3.html" title="love"></a>
-  <a class="chip c6" href="page3.html" title="based"></a>
-  <a class="chip c7" href="page3.html" title="feel"></a>
-  <a class="chip c8" href="page3.html" title="real"></a>
+  <a class="chip c6" href="page3.html" title="vibe"></a>
+  <a class="chip c7" href="page3.html" title="beam"></a>
+  <a class="chip c8" href="page3.html" title="bloom"></a>
   <a class="chip c9" href="page3.html" title="glow"></a>
 
   <!-- Bottom-right arrow -->
   <a class="nav next" href="page3.html">→</a>
+
+  <!-- Audio unlock -->
+  <button id="unlock">Enable sound</button>
+
+  <script>
+    // ---- CONFIG ----
+    // length of each slice (seconds)
+    const SLICE_LEN = 1.05;
+
+    // map each chip class to an offset (seconds) into the track
+    // adjust these to line up with the synth hits you want
+    const OFFSETS = {
+      c1: 0.00,
+      c2: 1.70,
+      c3: 2.20,
+      c5: 3.30,
+      c6: 4.40,
+      c7: 16.0,
+      c8: 6.60,
+      c9: 7.70
+    };
+
+    // Path to your audio file (place b.mp3.mp3 next to this HTML)
+    const AUDIO_URL = 'b.mp3';
+
+    // ---- AUDIO SETUP ----
+    let ctx, buffer, ready = false;
+
+    async function initAudio() {
+      if (ready) return;
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // fetch & decode once
+      const res = await fetch(AUDIO_URL);
+      const arr = await res.arrayBuffer();
+      buffer = await ctx.decodeAudioData(arr);
+      ready = true;
+    }
+
+    function playSlice(offsetSec) {
+      if (!ready || !buffer) return;
+      // clamp offset to buffer length
+      const maxStart = Math.max(0, buffer.duration - 0.05);
+      const start = Math.min(offsetSec, maxStart);
+
+      const now = ctx.currentTime;
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const gain = ctx.createGain();
+      // quick fade in/out to prevent clicks
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(1, now + 0.02);
+      gain.gain.setValueAtTime(1, now + SLICE_LEN - 0.03);
+      gain.gain.linearRampToValueAtTime(0, now + SLICE_LEN);
+
+      src.connect(gain).connect(ctx.destination);
+      src.start(now, start, SLICE_LEN);
+      // Let the node end naturally; no need to call stop()
+    }
+
+    // ---- EVENTS ----
+    document.getElementById('unlock').addEventListener('click', async () => {
+      try {
+        await initAudio();
+        await ctx.resume();
+        document.getElementById('unlock').remove();
+      } catch (e) {
+        alert('Could not start audio. Check console.');
+        console.error(e);
+      }
+    });
+
+    // Hover playback (pointerenter works for mouse + stylus)
+    document.querySelectorAll('.chip').forEach(el => {
+      const cls = Array.from(el.classList).find(c => /^c\d+$/.test(c));
+      const offset = OFFSETS[cls] ?? 0;
+
+      let cooldown = false;
+      el.addEventListener('pointerenter', () => {
+        if (!ready || cooldown) return;
+        playSlice(offset);
+        // small cooldown so repeated hover doesn’t spam
+        cooldown = true;
+        setTimeout(() => cooldown = false, 180);
+      });
+
+      // Optional: touch playback (tap quickly plays slice before navigating)
+      el.addEventListener('touchstart', (ev) => {
+        if (!ready) return;
+        // brief preview, then follow the link
+        ev.preventDefault();
+        playSlice(offset);
+        setTimeout(() => { window.location.href = el.href; }, SLICE_LEN * 1000);
+      }, {passive:false});
+    });
+  </script>
 </body>
 </html>
