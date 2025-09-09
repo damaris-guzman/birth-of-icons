@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>COLOR OVERLOAD — Burst</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; overflow:hidden; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: radial-gradient(1200px 800px at 50% 60%, #0b1020, #05060b 60%, #000 100%);
+  }
+
+  .swirl{
+    position:fixed; inset:-40vmax; pointer-events:none; opacity:.35;
+    background: conic-gradient(from 0deg at 50% 50%,
+      #ff3b30, #ff9500, #ffd60a, #34c759, #30d0f7, #0a84ff, #5e5ce6, #bf5af2, #ff375f, #ff3b30);
+    filter: blur(40px) saturate(1.2);
+    animation: spin 40s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .flash{ position:fixed; inset:0; pointer-events:none; background:#fff; opacity:0; animation: flash .6s ease-out; }
+  @keyframes flash{0%{opacity:.9}100%{opacity:0}}
+
+  .ring{
+    position:fixed; left:50%; top:50%; translate:-50% -50%;
+    width:40px; height:40px; border-radius:50%;
+    border:6px solid rgba(255,255,255,.7); filter:blur(1px);
+    animation: ring 1.8s cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  .ring:nth-child(2){animation-delay:.08s;border-color:rgba(255,255,255,.55)}
+  .ring:nth-child(3){animation-delay:.16s;border-color:rgba(255,255,255,.4)}
+  @keyframes ring{ 0%{opacity:1; transform:scale(.2)} 100%{opacity:0; transform:scale(26)} }
+
+  .p{
+    position:absolute; left:50%; top:50%; translate:-50% -50%;
+    --x:0px; --y:0px; --rot:0deg; --scale:1;
+    will-change: transform, opacity, filter;
+    mix-blend-mode: screen;
+    animation: fly var(--t) cubic-bezier(.2,.7,.2,1) forwards;
+  }
+  @keyframes fly{
+    0%{transform:translate(-50%,-50%) scale(.9); opacity:1; filter:blur(0)}
+    100%{transform:translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--rot)) scale(var(--scale)); opacity:0; filter:blur(2px)}
+  }
+
+  .dot{width:14px;height:14px;border-radius:50%; background:var(--c);}
+  .square{width:16px;height:16px;background:var(--c); border-radius:4px}
+  .diamond{width:18px;height:18px;background:var(--c); transform:rotate(45deg)}
+  .ringlet{width:22px;height:22px;border-radius:50%; border:4px solid var(--c)}
+  .pill{height:14px;border-radius:999px;background:linear-gradient(90deg,#fff8,transparent 40%), var(--c)}
+  .star{width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:18px solid var(--c); position:relative;}
+  .star:after{content:""; position:absolute; left:-10px; top:6px; border-left:10px solid transparent;border-right:10px solid transparent;border-top:18px solid var(--c);}
+  .heart{position:relative;width:18px;height:16px;background:var(--c); transform:rotate(-45deg); border-radius:5px 0 3px 3px;}
+  .heart:before,.heart:after{content:""; position:absolute; width:18px;height:18px;border-radius:50%; background:var(--c)}
+  .heart:before{left:0; top:-9px} .heart:after{left:9px; top:0}
+
+  .confetti{ position:fixed; top:-8px; left:0; width:100%; height:100%; pointer-events:none; overflow:hidden; }
+  .confetti span{
+    position:absolute; width:10px; height:10px; background:var(--c);
+    transform:translateY(-10vh) rotate(0); border-radius:2px;
+    animation: fall var(--time) linear var(--delay) infinite;
+    mix-blend-mode: screen; opacity:.8;
+  }
+  @keyframes fall{ to{ transform:translateY(110vh) rotate(540deg) } }
+
+  /* CLICKABLE CENTER STAR */
+  .center-star{
+    position:fixed; left:50%; top:50%;
+    transform:translate(-50%,-50%) scale(0.2) rotate(-10deg);
+    width:140px; aspect-ratio:1; z-index:3; opacity:0;
+    display:block; cursor:pointer; text-decoration:none;
+    animation: starIn .9s cubic-bezier(.2,.9,.2,1) forwards;
+    animation-delay: 1.1s; /* appears after the burst starts */
+  }
+  @keyframes starIn{ to{ transform:translate(-50%,-50%) scale(1) rotate(0); opacity:1 } }
+  .center-star svg{width:100%; height:100%; display:block}
+  .center-star polygon{ fill:#fff; stroke:#000; stroke-width:6; stroke-linejoin:round }
+  .center-star:focus-visible{ outline:6px solid #fff; outline-offset:6px; border-radius:12px }
+
+  @media (prefers-reduced-motion: reduce){
+    .p,.ring,.confetti span,.swirl,.center-star{animation:none}
+    .center-star{opacity:1; transform:translate(-50%,-50%)}
+  }
+</style>
+</head>
+<body>
+
+<div class="swirl"></div>
+<div id="burst"></div>
+<div class="confetti" id="confetti"></div>
+
+<script>
+(function(){
+  const burst = document.getElementById('burst');
+  const conf = document.getElementById('confetti');
+
+  const palette = Array.from({length:36}, (_,i)=>`hsl(${i*10}deg 95% ${Math.random()<.3?60:55}% )`);
+  const shapes = ['dot','square','diamond','ringlet','pill','star','heart'];
+
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  const choice=arr=>arr[Math.floor(Math.random()*arr.length)];
+  const div=cls=>{const d=document.createElement('div'); d.className=cls; return d;}
+
+  function explode(){
+    burst.innerHTML = '';
+    burst.appendChild(div('flash'));
+    burst.appendChild(div('ring')); burst.appendChild(div('ring')); burst.appendChild(div('ring'));
+
+    const max = Math.hypot(innerWidth, innerHeight) * 0.65;
+
+    const N = 320;
+    for(let i=0;i<N;i++){
+      const angle = Math.random()*Math.PI*2;
+      const dist  = rand(max*0.3, max);
+      const dx = Math.cos(angle)*dist;
+      const dy = Math.sin(angle)*dist;
+
+      const s = choice(shapes);
+      const color = choice(palette);
+      const p = div('p');
+
+      p.style.setProperty('--x', dx.toFixed(1)+'px');
+      p.style.setProperty('--y', dy.toFixed(1)+'px');
+      p.style.setProperty('--rot', rand(-540,540).toFixed(1)+'deg');
+      p.style.setProperty('--scale', rand(.7, 1.8).toFixed(2));
+      p.style.setProperty('--t', (rand(1200, 2600)/1000)+'s');
+
+      const vis = div(s); vis.style.setProperty('--c', color);
+      if(s==='pill'){ vis.style.width = rand(36,140)+'px'; }
+      if(s==='diamond'){ vis.style.borderRadius = '6px' }
+      p.appendChild(vis);
+      burst.appendChild(p);
+    }
+
+    // streamers
+    for(let i=0;i<36;i++){
+      const a = Math.random()*Math.PI*2;
+      const d = rand(max*0.25, max*0.95);
+      const dx = Math.cos(a)*d, dy = Math.sin(a)*d;
+      const r = div('p'); r.style.setProperty('--x', dx+'px'); r.style.setProperty('--y', dy+'px');
+      r.style.setProperty('--rot', rand(-90,90)+'deg'); r.style.setProperty('--scale', rand(.8,1.6));
+      r.style.setProperty('--t', (rand(1600, 3000)/1000)+'s');
+      const bar = document.createElement('div');
+      bar.style.width = rand(90,220)+'px'; bar.style.height = rand(10,20)+'px';
+      bar.style.borderRadius = '999px';
+      bar.style.background = `linear-gradient(90deg, ${choice(palette)}, ${choice(palette)}, ${choice(palette)})`;
+      r.appendChild(bar); burst.appendChild(r);
+    }
+
+    // ★ clickable center star -> index.html
+    const star = document.createElement('a');
+    star.href = 'index.html';
+    star.className = 'center-star';
+    star.title = 'Back to Home';
+    star.setAttribute('aria-label','Back to Index');
+    // Stop the global pointerdown from re-triggering the explosion when star is clicked
+    star.addEventListener('pointerdown', (e)=> e.stopPropagation());
+    star.innerHTML = `
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <polygon points="50,6 61,38 95,38 67,58 78,92 50,73 22,92 33,58 5,38 39,38"/>
+      </svg>`;
+    burst.appendChild(star);
+  }
+
+  function buildConfetti(){
+    conf.innerHTML='';
+    const count = 80;
+    for(let i=0;i<count;i++){
+      const s = document.createElement('span');
+      s.style.left = Math.random()*100 + 'vw';
+      s.style.setProperty('--c', choice(palette));
+      s.style.setProperty('--time', (rand(6,11))+'s');
+      s.style.setProperty('--delay', (rand(-10,2))+'s');
+      conf.appendChild(s);
+    }
+  }
+
+  explode();
+  buildConfetti();
+
+  document.addEventListener('pointerdown', explode);
+  window.addEventListener('resize', ()=>{ buildConfetti(); explode(); });
+})();
+</script>
+</body>
+</html>
