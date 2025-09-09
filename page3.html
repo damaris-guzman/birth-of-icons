@@ -1,46 +1,63 @@
-<!-- p2-circles-squares.html (arrow replaced with bottom-right "→" nav) -->
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>2 · Circles & Squares</title>
-  <style>
-    :root{--ink:#111}
-    *{box-sizing:border-box}html,body{height:100%}body{margin:0;overflow:hidden;font-family:system-ui;background:#fff}
-    .c{position:absolute;border-radius:50%}
-    .sq{position:absolute;border:3px solid var(--ink);background:#fff}
-    @keyframes bob{from{transform:translateY(0)}50%{transform:translateY(-14px)}to{transform:translateY(0)}}
-    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-    .c{animation:bob 3s ease-in-out infinite}
-    .sq{animation:spin 8s linear infinite}
+<!-- p2-circles-squares.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>2 · Circles & Squares</title>
+<style>
+  :root{--ink:#111}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;overflow:hidden;font-family:system-ui;background:#fff}
 
-    /* Bottom-right arrow styles (copied from your other page) */
-    .nav{
-      position:fixed; bottom:10px; padding:6px 10px; border-radius:8px;
-      background:rgba(255,255,255,.6); backdrop-filter:blur(6px);
-      text-decoration:none; color:#000; font-weight:600;
-    }
-    .next{ right:10px; }
-  </style>
+  .c{position:absolute;border-radius:50%}
+  .sq{position:absolute;border:3px solid var(--ink);background:#fff}
+
+  @keyframes bob{from{transform:translateY(0)}50%{transform:translateY(-14px)}to{transform:translateY(0)}}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+  .c{animation:bob 3s ease-in-out infinite}
+  .sq{animation:spin 8s linear infinite}
+
+  /* Bottom-right arrow styles (z-index keeps it always visible) */
+  .nav{
+    position:fixed;
+    bottom:10px;
+    right:10px;
+    padding:6px 10px;
+    border-radius:8px;
+    background:rgba(255,255,255,.6);
+    backdrop-filter:blur(6px);
+    text-decoration:none;
+    color:#000;
+    font-weight:600;
+    z-index:1000; /* 👈 keeps arrow above shapes */
+  }
+</style>
 </head>
 <body>
   <!-- Bottom-right arrow -->
-  <a class="nav next" href="page4.html">→</a>
+  <a class="nav" href="page4.html">→</a>
 
   <script>
-  const cols=["#ff5bb2","#ff8a3d","#ffd93d","#2bd100","#34c3ff","#6a00ff","#d84cff","#00c6b8"];
-  for(let i=0;i<70;i++){
-    const el=document.createElement('div');
-    const W=innerWidth,H=innerHeight;
-    if(Math.random()<.5){ // circle
-      el.className='c'; const s=20+Math.random()*120;
-      el.style.width=el.style.height=s+'px';
-      el.style.background=cols[i%cols.length];
-    }else{                // square
-      el.className='sq'; const s=24+Math.random()*110;
-      el.style.width=el.style.height=s+'px';
+    const cols=["#ff5bb2","#ff8a3d","#ffd93d","#2bd100","#34c3ff","#6a00ff","#d84cff","#00c6b8"];
+    for(let i=0;i<70;i++){
+      const el=document.createElement('div');
+      const W=innerWidth,H=innerHeight;
+      if(Math.random()<.5){ // circle
+        el.className='c'; const s=20+Math.random()*120;
+        el.style.width=el.style.height=s+'px';
+        el.style.background=cols[i%cols.length];
+      }else{                // square
+        el.className='sq'; const s=24+Math.random()*110;
+        el.style.width=el.style.height=s+'px';
+      }
+      el.style.left=Math.random()*W+'px';
+      el.style.top=Math.random()*H+'px';
+      el.style.animationDelay=Math.random()*2+'s';
+      document.body.appendChild(el);
     }
-    el.style.left=Math.random()*W+'px';
-    el.style.top=Math.random()*H+'px';
-    el.style.animationDelay=Math.random()*2+'s';
-    document.body.appendChild(el);
-  }
   </script>
-</body></html>
+</body>
+</html>
